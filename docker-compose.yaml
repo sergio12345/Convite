@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  main-app:
+    image: marcotnk/uh-php:8.0-apache
+    ports:
+      - '8080:80'
+      - '3030:3030'
+    # restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+       - main-db
+    networks:
+      - main-network
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=main-db
+      - DB_PORT=3306
+      - DB_DATABASE=app_develop
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+    working_dir: /var/www/html
+    entrypoint: dockerize -wait tcp://main-db:3306 -timeout 300s
+    command: /bin/bash ./.docker/main-app-setup.sh
+  
+  main-db:
+    image: mysql:8.0.29
+    ports:
+      - '3306:3306'
+    # restart: unless-stopped
+    volumes:
+      - .docker/dbdata:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=app_develop
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - main-network
+
+networks:
+  main-network:
+    driver: bridge
